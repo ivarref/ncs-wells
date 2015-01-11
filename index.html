@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body { font: 12px sans-serif; }
+svg { border: 1px solid #000; }
+path { fill: none; stroke: black; stroke-width: 3px; }
+text.heading { font: 22px sans-serif; font-variant: small-caps; font-weight: bold; }
+.axis path,
+.axis line { fill: none; stroke: #000; stroke-width: 1px; shape-rendering: crispEdges; }
+</style>
+<title>Which wellbores found the oil?</title>
+<body>
+<script src="d3.v3.min.js"></script>
+<script>
+  if (window.location.href.indexOf("localhost") == -1) {
+    // TODO
+  }
+function singleElement(root, elementtype, id) {
+  if (id.charAt(0) == '#') id = id.substring(1)
+  var sel = root.selectAll(elementtype + "#" + id).data([1])
+  sel.enter().append(elementtype).attr('id', id)
+  return sel
+}
+
+function prop(p) { return function(d) { return d[p] } }
+function ww(elm) { return elm.node().getBBox().width }
+
+var margin = {top: 35, right: 60, bottom: 35, left: 60},
+    width = 960 - margin.left - margin.right,
+    height = 470 - margin.top - margin.bottom
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+function update(svg, data, resource, color) {
+  var x = d3.scale.linear().range([0, width])
+  var y = d3.scale.linear().range([height, 0])
+
+  x.domain([0, d3.max(data, prop('wellnumber'))])
+  y.domain([0, d3.max(data, prop('cumulative'))])
+
+  var y2 = d3.scale.linear().range([height, 0])
+  y2.domain([0, 100])
+
+  svg.selectAll('line').data(d3.range(10, 110, 10))
+  .enter()
+  .append('line')
+  .attr('class', 'axis')
+  .attr('x1', 0)
+  .attr('x2', width)
+  .attr('y1', y2)
+  .attr('y2', y2)
+  .style('stroke', 'gray')
+  .style('stroke-opacity', '60%')
+
+  var spacewidth = 0.278
+  var heading1 = singleElement(svg, 'text', 'heading1')
+  .attr("transform", "translate(" + (0) + "," + (0) + ")")
+  .attr("dy", "-.29em").attr("class", "heading")
+  .text('Which wellbores found' + (resource==='All Petroleum'? '' : " the"))
+
+  var heading2 = singleElement(svg, 'text', 'heading2')
+  .attr("transform", "translate(" + ww(heading1) + "," + (0) + ")")
+  .attr("dy", "-.29em").attr("class", "heading")
+  .attr("dx", (spacewidth*1) + "em")
+  .style('fill', color)
+  .text(resource)
+
+  var heading3 = singleElement(svg, 'text', 'heading3')
+  .attr("transform", "translate(" + (ww(heading1) + ww(heading2)) + "," + (0) + ")")
+  .attr("dy", "-.29em").attr("class", "heading")
+  .attr("dx", (spacewidth*2) + "em")
+  .text('on the Norwegian Continental Shelf?')
+
+  singleElement(svg, 'g', 'xAxis')
+  .attr('class', 'x axis')
+  .attr("transform", "translate(0," + height + ")")
+  .call(d3.svg.axis().scale(x).orient("bottom") 
+  .tickFormat(function(d) { return d }))
+
+  singleElement(svg, 'g', 'yAxis')
+  .attr('class', 'y axis')
+  .attr("transform", "translate(" + width + ",0)")
+  .call(d3.svg.axis().scale(y).orient("right"))
+
+  singleElement(svg, 'g', 'yAxis2')
+  .attr('class', 'y axis')
+  .call(d3.svg.axis().scale(y2).orient("left"))
+
+  singleElement(svg, 'text', 'xaxislabel')
+  .attr("transform", "translate(" + (width/2) + "," + (height + margin.bottom) + ")")
+  .attr("dy", "-.29em")
+  .style("text-anchor", "middle")
+  .style("font-variant", "small-caps")
+  .text('Number of Wells Drilled (in Chronological Order)')
+
+  singleElement(svg, 'text', 'yaxislabel')
+  .attr("transform", "translate(" + (width+35) + "," + (height/2) + ") rotate(90)")
+  .attr("dy", "-.29em")
+  .attr('text-anchor', 'middle')
+  .style('font-variant', 'small-caps')
+  .text('Cumulative Discoveries of Giga (Billion) Barrels of Oil Equivalents, Gboe')
+
+  singleElement(svg, 'text', 'yaxislabel2')
+  .attr("transform", "translate(" + (-35) + "," + (height/2) + ") rotate(-90)")
+  .attr("dy", ".29em")
+  .attr('text-anchor', 'middle')
+  .style('font-variant', 'small-caps')
+  .text('Percentage of Cumulative Discoveries')
+
+  singleElement(svg, 'text', 'sourceinfo')
+  .attr("transform", "translate(" + (width) + "," + (height) + ")")
+  .attr("dy", "-.29em")
+  .attr("dx", "-.29em")
+  .style("text-anchor", "end")
+  .text('Based on data from NPD')
+
+  singleElement(svg, 'text', 'contact')
+  .attr("transform", "translate(" + (width + margin.right) + "," + (height + margin.bottom) + ")")
+  .attr("dy", "-.29em")
+  .attr("dx", "-.29em")
+  .style("text-anchor", "end")
+  .style('font-variant', 'small-caps')
+  .text('Diagram by Refsdal.Ivar@gmail.com')
+
+  svg.selectAll('circle').data(data)
+  .enter()
+  .append('circle')
+  .attr('cx', function(d) { return x(d.wellnumber) })
+  .attr('cy', function(d) { return y(d.cumulative) })
+  .attr('r', 5)
+
+
+  /* 
+  Goals
+  =====
+  Show bars / line / data
+  Use range bands?
+  Add gas, petroleum to display
+  Add clik/hover info about selected wellbore, including year
+  Add year as alternative x-axis?
+
+  Done
+  ====
+  Show dots
+  */
+}
+
+var format = d3.time.format("%Y-%m-%d");
+
+d3.tsv('data/data.tsv', function(err, data) { 
+
+  // fd.write('wellbore\tdate\tdiscovered_oil\n')
+  var wellnumber = 0
+  var cumulative_discovered = 0
+  function build_data(resource) {
+    return data.map(function(d) {
+      return { 'wellbore' : d.wellbore,
+               'wellnumber' : ++wellnumber,
+               'resource' : +d[resource],
+               'cumulative' : cumulative_discovered+= (+d[resource]),
+               'date' : format.parse(d.date) }
+    })
+  }
+
+  update(svg, build_data('discovered_oil'), 'Oil', '#187418')
+  svg.selectAll('text').text(function(d) { return d3.select(this).text().replace('Gboe', 'Gb').replace(' Equivalents', '') })
+
+  d3.select('body').append('div')
+  .append('a')
+  .attr('href', 'https://github.com/ivarref/ncs-wells/')
+  .text('More info about this diagram.')
+  d3.select('body').append('div')
+
+})
+
+</script>
+</body>
