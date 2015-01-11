@@ -29,11 +29,17 @@ var margin = {top: 35, right: 60, bottom: 35, left: 60},
     width = 960 - margin.left - margin.right,
     height = 470 - margin.top - margin.bottom
 
-var svg = d3.select("body").append("svg")
+function get_svg(margin_top) {
+    return d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
+    .style("margin-top", margin_top)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+}
+var svg1 = get_svg('0em'); d3.select('body').append('div')
+var svg2 = get_svg('1em'); d3.select('body').append('div')
+var svg3 = get_svg('1em'); d3.select('body').append('div')
 
 function update(svg, data, resource, color) {
   var x = d3.scale.linear().range([0, width])
@@ -60,7 +66,7 @@ function update(svg, data, resource, color) {
   var heading1 = singleElement(svg, 'text', 'heading1')
   .attr("transform", "translate(" + (0) + "," + (0) + ")")
   .attr("dy", "-.29em").attr("class", "heading")
-  .text('Which wellbores found' + (resource==='All Petroleum'? '' : " the"))
+  .text('Which wellbores contained' + (resource==='All Petroleum'? '' : " the"))
 
   var heading2 = singleElement(svg, 'text', 'heading2')
   .attr("transform", "translate(" + ww(heading1) + "," + (0) + ")")
@@ -137,8 +143,7 @@ function update(svg, data, resource, color) {
   /* 
   Goals
   =====
-  Show bars / line / data
-  Use range bands?
+  Show lines with dots
   Add gas, petroleum to display
   Add clik/hover info about selected wellbore, including year
   Add year as alternative x-axis?
@@ -146,17 +151,19 @@ function update(svg, data, resource, color) {
   Done
   ====
   Show dots
+
+  No
+  ==
+  Use range bands?
   */
 }
 
 var format = d3.time.format("%Y-%m-%d");
 
 d3.tsv('data/data.tsv', function(err, data) { 
-
-  // fd.write('wellbore\tdate\tdiscovered_oil\n')
-  var wellnumber = 0
-  var cumulative_discovered = 0
   function build_data(resource) {
+    var wellnumber = 0
+    var cumulative_discovered = 0
     return data.map(function(d) {
       return { 'wellbore' : d.wellbore,
                'wellnumber' : ++wellnumber,
@@ -166,8 +173,11 @@ d3.tsv('data/data.tsv', function(err, data) {
     })
   }
 
-  update(svg, build_data('discovered_oil'), 'Oil', '#187418')
-  svg.selectAll('text').text(function(d) { return d3.select(this).text().replace('Gboe', 'Gb').replace(' Equivalents', '') })
+  update(svg1, build_data('discovered_oil'), 'Oil', '#187418')
+  update(svg2, build_data('discovered_oil'), 'Gas', d3.rgb(254,24,24))
+  update(svg3, build_data('discovered_oil'), 'All Petroleum', 'saddlebrown')
+
+  svg1.selectAll('text').text(function(d) { return d3.select(this).text().replace('Gboe', 'Gb').replace(' Equivalents', '') })
 
   d3.select('body').append('div')
   .append('a')
