@@ -61,10 +61,36 @@ set_output_encoding()
 
 # Goal:
 # Output
-# wellbore    date    found_oil found_gas found_oe
+# wellbore    date    discovered_oil discovered_gas discovered_oe
 
 if not os.path.exists('data'):
   os.makedirs('data')
+
+exploration_data = [x.strip() for x in get_url('http://factpages.npd.no/ReportServer?/FactPages/TableView/wellbore_exploration_all&rs:Command=Render&rc:Toolbar=false&rc:Parameters=f&rs:Format=CSV&Top100=false&IpAddress=84.208.153.159&CultureCode=en', 'cache/exploration_wells.csv').split('\n') if x.strip() != '']
+
+(wlbWellboreName,wlbWell,wlbDrillingOperator,wlbDrillingOperatorGroup,wlbProductionLicence,wlbPurpose,wlbStatus,wlbContent,wlbWellType,wlbEntryDate,wlbCompletionDate,wlbField,wlbDrillPermit,wlbDiscovery,wlbDiscoveryWellbore,wlbBottomHoleTemperature,wlbSeismicLocation,wlbMaxInclation,wlbKellyBushElevation,wlbFinalVerticalDepth,wlbTotalDepth,wlbWaterDepth,wlbAgeAtTd,wlbFormationAtTd,wlbMainArea,wlbDrillingFacility,wlbFacilityTypeDrilling,wlbLicensingActivity,wlbMultilateral,wlbPurposePlanned,wlbEntryYear,wlbCompletionYear,wlbReclassFromWellbore,wlbReentryExplorationActivity,wlbPlotSymbol,wlbFormationWithHc1,wlbAgeWithHc1,wlbFormationWithHc2,wlbAgeWithHc2,wlbFormationWithHc3,wlbAgeWithHc3,wlbDrillingDays,wlbReentry,wlbGeodeticDatum,wlbNsDeg,wlbNsMin,wlbNsSec,wlbNsCode,wlbEwDeg,wlbEwMin,wlbEwSec,wlbEwCode,wlbNsDecDeg,wlbEwDesDeg,wlbNsUtm,wlbEwUtm,wlbUtmZone,wlbNamePart1,wlbNamePart2,wlbNamePart3,wlbNamePart4,wlbNamePart5,wlbNamePart6,wlbPressReleaseUrl,wlbFactPageUrl,wlbFactMapUrl,wlbDiskosWellboreType,wlbDiskosWellboreParent,wlbWdssQcDate,wlbNpdidWellbore,dscNpdidDiscovery,fldNpdidField,fclNpdidFacilityDrilling,wlbNpdidWellboreReclass,prlNpdidProductionLicence,wlbDiskosWellOperator,wlbDateUpdated,wlbDateUpdatedMax,datesyncNPD) = verify_and_assign("wlbWellboreName,wlbWell,wlbDrillingOperator,wlbDrillingOperatorGroup,wlbProductionLicence,wlbPurpose,wlbStatus,wlbContent,wlbWellType,wlbEntryDate,wlbCompletionDate,wlbField,wlbDrillPermit,wlbDiscovery,wlbDiscoveryWellbore,wlbBottomHoleTemperature,wlbSeismicLocation,wlbMaxInclation,wlbKellyBushElevation,wlbFinalVerticalDepth,wlbTotalDepth,wlbWaterDepth,wlbAgeAtTd,wlbFormationAtTd,wlbMainArea,wlbDrillingFacility,wlbFacilityTypeDrilling,wlbLicensingActivity,wlbMultilateral,wlbPurposePlanned,wlbEntryYear,wlbCompletionYear,wlbReclassFromWellbore,wlbReentryExplorationActivity,wlbPlotSymbol,wlbFormationWithHc1,wlbAgeWithHc1,wlbFormationWithHc2,wlbAgeWithHc2,wlbFormationWithHc3,wlbAgeWithHc3,wlbDrillingDays,wlbReentry,wlbGeodeticDatum,wlbNsDeg,wlbNsMin,wlbNsSec,wlbNsCode,wlbEwDeg,wlbEwMin,wlbEwSec,wlbEwCode,wlbNsDecDeg,wlbEwDesDeg,wlbNsUtm,wlbEwUtm,wlbUtmZone,wlbNamePart1,wlbNamePart2,wlbNamePart3,wlbNamePart4,wlbNamePart5,wlbNamePart6,wlbPressReleaseUrl,wlbFactPageUrl,wlbFactMapUrl,wlbDiskosWellboreType,wlbDiskosWellboreParent,wlbWdssQcDate,wlbNpdidWellbore,dscNpdidDiscovery,fldNpdidField,fclNpdidFacilityDrilling,wlbNpdidWellboreReclass,prlNpdidProductionLicence,wlbDiskosWellOperator,wlbDateUpdated,wlbDateUpdatedMax,datesyncNPD", exploration_data)
+
+
+exploration_data = [x.split(",") for x in exploration_data[1:]]
+
+seen_discoveries = []
+
+disc = {}
+
+for line in exploration_data:
+  discovery = line[wlbField]
+  if discovery not in disc:
+    disc[discovery] = []
+  entrydate = line[wlbEntryDate].split('.')
+  entrydate.reverse()
+  disc[discovery].append('-'.join(entrydate))
+
+for key in disc.keys():
+  if key.strip() == '':
+    continue
+  disc[key].sort()
+  x = disc[key][0]
+  print "%s => %s vs %s" % (key, x, str((disc[key])))
 
 with codecs.open('data/data.tsv', encoding='utf-8', mode='w') as fd:
   fd.write('wellbore\tdate\tdiscovered_oil\n')
