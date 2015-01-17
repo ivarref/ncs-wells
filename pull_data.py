@@ -117,20 +117,85 @@ for line in exploration_data:
     date_to_discoveries[iso8601_date] = []
   date_to_discoveries[iso8601_date].append(line)
 
-print "*** Done initial parsing ..."
+def get_resources_map():
+  resources_url_csv = 'http://factpages.npd.no/ReportServer?/FactPages/TableView/discovery_reserves&rs:Command=Render&rc:Toolbar=false&rc:Parameters=f&rs:Format=CSV&Top100=false&IpAddress=2.150.32.28&CultureCode=en'
+  resources = [x.strip() for x in get_url(resources_url_csv, 'cache/resources.csv').split("\n")]
+  values = "dscName,dscReservesRC,dscRecoverableOil,dscRecoverableGas,dscRecoverableNGL,dscRecoverableCondensate,dscDateOffResEstDisplay,dscNpdidDiscovery,dscReservesDateUpdated,DatesyncNPD"
+  if resources[0] != values:
+    print "CSV format changed."
+    sys.exit(-1)
+  (dscName,dscReservesRC,dscRecoverableOil,dscRecoverableGas,dscRecoverableNGL,dscRecoverableCondensate,dscDateOffResEstDisplay,dscNpdidDiscovery,dscReservesDateUpdated,DatesyncNPD) = tuple([idx for (idx, x) in enumerate(values.split(","))])
+  resources = [x.split(",") for x in resources[1:] if x.strip() != ""]
+  resource_map = {}
+  for res in resources:
+    oil = Decimal(res[dscRecoverableOil])
+    gas = Decimal(res[dscRecoverableGas])
+    ngl = Decimal(res[dscRecoverableNGL])
+    con = Decimal(res[dscRecoverableCondensate])
+    oe = oil + gas + ngl + con
+    resource_map[res[dscName]] = (oil, gas, oe)
+  return resource_map
+
+def fldname_to_reserves():
+  reserves_url_csv = 'http://factpages.npd.no/ReportServer?/FactPages/TableView/field_reserves&rs:Command=Render&rc:Toolbar=false&rc:Parameters=f&rs:Format=CSV&Top100=false&IpAddress=84.208.160.74&CultureCode=en'
+  reserves = [x.strip() for x in get_url(reserves_url_csv, 'cache/reserves.csv').split("\n") if x.strip() != ""]
+  values = "fldName,fldRecoverableOil,fldRecoverableGas,fldRecoverableNGL,fldRecoverableCondensate,fldRecoverableOE,fldRemainingOil,fldRemainingGas,fldRemainingNGL,fldRemainingCondensate,fldRemainingOE,fldDateOffResEstDisplay,fldNpdidField,DatesyncNPD"
+  if reserves[0] != values:
+    print "CSV format changed."
+    sys.exit(-1)
+  (fldName,fldRecoverableOil,fldRecoverableGas,fldRecoverableNGL,fldRecoverableCondensate,fldRecoverableOE,fldRemainingOil,fldRemainingGas,fldRemainingNGL,fldRemainingCondensate,fldRemainingOE,fldDateOffResEstDisplay,fldNpdidField,DatesyncNPD) = tuple([idx for (idx, x) in enumerate("fldName,fldRecoverableOil,fldRecoverableGas,fldRecoverableNGL,fldRecoverableCondensate,fldRecoverableOE,fldRemainingOil,fldRemainingGas,fldRemainingNGL,fldRemainingCondensate,fldRemainingOE,fldDateOffResEstDisplay,fldNpdidField,DatesyncNPD".split(","))])
+  reserves = [x.split(",") for x in reserves[1:] if x.strip() != ""]
+  reserves_map = {}
+  for reserve in reserves:
+    oil = Decimal(reserve[fldRecoverableOil])
+    gas = Decimal(reserve[fldRecoverableGas])
+    ngl = Decimal(reserve[fldRecoverableNGL])
+    con = Decimal(reserve[fldRecoverableCondensate])
+    oe = oil + gas + ngl + con
+    reserves_map[reserve[fldName]] = (oil, gas, oe)
+  return reserves_map
+
+def lookup_resources():
+  resources = get_resources_map()
+  reserves = fldname_to_reserves()
+  def lookup(discovery):
+    if discovery in resources:
+      return resources[discovery]
+    elif discovery in reserves:
+      return reserves[discovery]
+    else:
+      print "NOT FOUND '%s'" % (discovery)
+      return (Decimal(0), Decimal(0), Decimal(0))
+  return lookup
+
+lookup_field = lookup_resources()
+
+sys.stderr.write("*** Done initial parsing ...\n")
 
 dates = date_to_discoveries.keys()
 dates.sort()
+
+resources_map = get_resources_map()
+total_oe = Decimal(0)
+total_oil = Decimal(0)
+
 for date in dates:
   wells_for_date = date_to_discoveries[date]
   for line in wells_for_date:
     discovery = line[wlbField]
     reserves = { 'oil' : Decimal(0) }
     if disc[discovery][0] == date:
-      print "numero uno '%s' => '%s'" % (date, discovery)
+      (oil, gas, oe) = lookup_field(discovery)
+      total_oe += oe
+      total_oil += oil
+      #print "numero uno '%s' => '%s'" % (date, discovery)
       pass
     else:
-      print "not numero uno '%s' => '%s'" % (date, discovery)
+      #print "not numero uno '%s' => '%s'" % (date, discovery)
+      pass
+
+print total_oe * Decimal(6.29) / Decimal(1000.0)
+print total_oil * Decimal(6.29) / Decimal(1000.0)
       
 with codecs.open('data/data.tsv', encoding='utf-8', mode='w') as fd:
   fd.write('wellbore\tdate\tdiscovered_oil\n')
@@ -139,4 +204,6 @@ with codecs.open('data/data.tsv', encoding='utf-8', mode='w') as fd:
   fd.write('%s\n' % ('\t'.join(['1234', '2002-01-01', '12.0'])))
   fd.write('%s\n' % ('\t'.join(['1234', '2010-01-01', '150.0'])))
   fd.write('%s\n' % ('\t'.join(['1234', '2012-01-01', '12.0'])))
+
+
 
