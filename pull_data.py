@@ -93,7 +93,8 @@ for line in exploration_data:
     # Let's ignore it ......
     sys.stderr.write("[WARN] Skipping %s\n" % (str(line)))
     continue
-
+  if line[wlbPurpose] != 'WILDCAT':
+    continue
   field_to_type[line[wlbField]] = 'field'
 
   if line[wlbField] == '':
@@ -179,31 +180,33 @@ resources_map = get_resources_map()
 total_oe = Decimal(0)
 total_oil = Decimal(0)
 
-for date in dates:
-  wells_for_date = date_to_discoveries[date]
-  for line in wells_for_date:
-    discovery = line[wlbField]
-    reserves = { 'oil' : Decimal(0) }
-    if disc[discovery][0] == date:
-      (oil, gas, oe) = lookup_field(discovery)
-      total_oe += oe
-      total_oil += oil
-      #print "numero uno '%s' => '%s'" % (date, discovery)
-      pass
-    else:
-      #print "not numero uno '%s' => '%s'" % (date, discovery)
-      pass
+with codecs.open('data/data.tsv', encoding='utf-8', mode='w') as fd:
+  fd.write('wellbore\tdate\tdiscovered_oil\tdiscovered_gas\tdiscovered_oe\n')
+
+  for date in dates:
+    wells_for_date = date_to_discoveries[date]
+    for line in wells_for_date:
+      discovery = line[wlbField]
+      reserves = { 'oil' : Decimal(0) }
+      if disc[discovery][0] == date:
+        (oil, gas, oe) = lookup_field(discovery)
+        total_oe += oe
+        total_oil += oil
+        fd.write("%s\n" % ("\t".join([discovery, date, "%.2f" % (oil), "%.2f" % (gas), "%.2f" % (oe)])))
+      else:
+        fd.write("%s\n" % ("\t".join([discovery, date, "0", "0", "0"])))
+        pass
 
 print total_oe * Decimal(6.29) / Decimal(1000.0)
 print total_oil * Decimal(6.29) / Decimal(1000.0)
       
-with codecs.open('data/data.tsv', encoding='utf-8', mode='w') as fd:
-  fd.write('wellbore\tdate\tdiscovered_oil\n')
-  fd.write('%s\n' % ('\t'.join(['1234', '1998-01-01', '123.0'])))
-  fd.write('%s\n' % ('\t'.join(['1234', '2000-01-01', '0.0'])))
-  fd.write('%s\n' % ('\t'.join(['1234', '2002-01-01', '12.0'])))
-  fd.write('%s\n' % ('\t'.join(['1234', '2010-01-01', '150.0'])))
-  fd.write('%s\n' % ('\t'.join(['1234', '2012-01-01', '12.0'])))
+#with codecs.open('data/data.tsv', encoding='utf-8', mode='w') as fd:
+#fd.write('wellbore\tdate\tdiscovered_oil\n')
+#fd.write('%s\n' % ('\t'.join(['1234', '1998-01-01', '123.0'])))
+#fd.write('%s\n' % ('\t'.join(['1234', '2000-01-01', '0.0'])))
+#fd.write('%s\n' % ('\t'.join(['1234', '2002-01-01', '12.0'])))
+#fd.write('%s\n' % ('\t'.join(['1234', '2010-01-01', '150.0'])))
+#fd.write('%s\n' % ('\t'.join(['1234', '2012-01-01', '12.0'])))
 
 
 

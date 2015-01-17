@@ -8,7 +8,7 @@ text.heading { font: 22px sans-serif; font-variant: small-caps; font-weight: bol
 .axis path,
 .axis line { fill: none; stroke: #000; stroke-width: 1px; shape-rendering: crispEdges; }
 </style>
-<title>Which wellbores found the oil?</title>
+<title>Which wellbores contained petroleum?</title>
 <body>
 <script src="d3.v3.min.js"></script>
 <script>
@@ -118,10 +118,10 @@ function update(svg, data, resource, color) {
   .text('Percentage of Cumulative Discoveries')
 
   singleElement(svg, 'text', 'sourceinfo')
-  .attr("transform", "translate(" + (width) + "," + (height) + ")")
+  .attr("transform", "translate(" + (0) + "," + (height + margin.bottom) + ")")
   .attr("dy", "-.29em")
   .attr("dx", "-.29em")
-  .style("text-anchor", "end")
+  .style("text-anchor", "start")
   .text('Based on data from NPD')
 
   singleElement(svg, 'text', 'contact')
@@ -132,6 +132,41 @@ function update(svg, data, resource, color) {
   .style('font-variant', 'small-caps')
   .text('Diagram by Refsdal.Ivar@gmail.com')
 
+  var decades = d3.nest()
+  .key(function(d) { var yr = d.date.getFullYear(); return yr - (yr%10); })
+  .sortKeys(d3.ascending)
+  .entries(data)
+
+  var dec2 = decades.map(function(d, i) {
+    var nextelem = (i != (decades.length-1)) ? decades[i+1].values[0] : d.values[d.values.length-1]
+    var startelem = d.values[0]
+    var found_in_decade = d3.sum(d.values, function(d) { return d.resource }) * 6.29 / 1000.0
+    return {key : d.key, resources : found_in_decade, count: d.values.length, delta : nextelem.wellnumber - startelem.wellnumber, start : startelem, stop: nextelem}
+  })
+
+  svg.append('g')
+  .selectAll('rect')
+  .data(dec2)
+  .enter()
+  .append('rect')
+  .attr('transform', function(d) { return 'translate(' + x(d.start.wellnumber) + ",0)"; })
+  .attr('width', function(d) { return x(d.delta) })
+  .attr('height', function(d) { return height - y(d.resources) })
+  .attr('height', height)
+  .style('fill', function(d,i) { return i%2==0 ? 'gray' : 'lightgray' })
+  .style('fill-opacity', '50%')
+
+  svg.append('g')
+  .selectAll('text')
+  .data(dec2.filter(function(d, i) { return i > 0 }))
+  .enter()
+  .append('text')
+  .attr('transform', function(d) { return 'translate(' + x(d.start.wellnumber + d.delta/2) + "," + height + ")"; })
+  .attr('dy', '-.21em')
+  .style('text-anchor', 'middle')
+  .style('font-variant', 'small-caps')
+  .text(function(d) { return d.key + "s" })
+
   svg.selectAll('circle').data(data)
   .enter()
   .append('circle')
@@ -139,18 +174,17 @@ function update(svg, data, resource, color) {
   .attr('cy', function(d) { return y(d.cumulative) })
   .attr('r', 5)
 
-
   /* 
   Goals
   =====
   Show lines with dots
-  Add gas, petroleum to display
   Add clik/hover info about selected wellbore, including year
-  Add year as alternative x-axis?
 
   Done
   ====
   Show dots
+  Add gas, petroleum to display
+  Add year as alternative x-axis?
 
   No
   ==
@@ -164,18 +198,21 @@ d3.tsv('data/data.tsv', function(err, data) {
   function build_data(resource) {
     var wellnumber = 0
     var cumulative_discovered = 0
-    return data.map(function(d) {
+    var tmpdata = data.map(function(d) {
       return { 'wellbore' : d.wellbore,
                'wellnumber' : ++wellnumber,
                'resource' : +d[resource],
                'cumulative' : cumulative_discovered+= (+d[resource]),
                'date' : format.parse(d.date) }
     })
+
+    tmpdata.forEach(function(d) { d.cumulative = d.cumulative * 6.29 / 1000.0 })
+    return tmpdata
   }
 
   update(svg1, build_data('discovered_oil'), 'Oil', '#187418')
-  update(svg2, build_data('discovered_oil'), 'Gas', d3.rgb(254,24,24))
-  update(svg3, build_data('discovered_oil'), 'All Petroleum', 'saddlebrown')
+  update(svg2, build_data('discovered_gas'), 'Gas', d3.rgb(254,24,24))
+  update(svg3, build_data('discovered_oe'), 'All Petroleum', 'saddlebrown')
 
   svg1.selectAll('text').text(function(d) { return d3.select(this).text().replace('Gboe', 'Gb').replace(' Equivalents', '') })
 
