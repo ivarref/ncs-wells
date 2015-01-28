@@ -167,12 +167,50 @@ function update(svg, data, resource, color) {
   .style('font-variant', 'small-caps')
   .text(function(d) { return d.key + "s" })
 
-  svg.selectAll('circle').data(data)
+  svg.append('path').datum(data)
+  .attr('d', d3.svg.line()
+            .x(function(d) { return x(d.wellnumber) })
+            .y(function(d) { return y(d.cumulative) }))
+
+  var giants = data.filter(function(d)  {return d.resource >= 1.0 })
+
+  var infobox = svg.append('g')
+  .attr('display', 'none')
+
+  var rect = infobox.append('rect')
+  .attr('height', '34')
+  .attr('width', '100')
+  .attr('dx', '-1em')
+  .attr('y', '-16')
+  .style('fill', '#eee')
+  .style('fill-opacity', '80%')
+  .style('stroke', 'black')
+  .style('stroke-width', '1px')
+
+  var infotext = infobox.append('text')
+  .attr('dx', '.71em')
+  .style('font-weight', 'bold')
+
+  var infotext2 = infobox.append('text')
+  .attr('dx', '.71em')
+  .attr('dy', '1em')
+
+  svg.selectAll('circle').data(giants)
   .enter()
   .append('circle')
   .attr('cx', function(d) { return x(d.wellnumber) })
   .attr('cy', function(d) { return y(d.cumulative) })
   .attr('r', 5)
+  .style('fill', color)
+  .style('stroke-width', '2px')
+  .style('stroke', 'black')
+  .on('mouseover', function(d) {
+    infobox.attr('display', null)
+    infobox.attr('transform', 'translate(' + (x(d.wellnumber)+10) + "," + (y(d.cumulative)+10) + ')')
+    infotext.text(d.wellbore)
+    infotext2.text(d.resource.toFixed(1) + " Gboe")
+    rect.attr('width', 20 + d3.max([ww(infotext), ww(infotext2)]))
+  })
 
   /* 
   Goals
@@ -207,6 +245,7 @@ d3.tsv('data/data.tsv', function(err, data) {
     })
 
     tmpdata.forEach(function(d) { d.cumulative = d.cumulative * 6.29 / 1000.0 })
+    tmpdata.forEach(function(d) { d.resource = d.resource * 6.29 / 1000.0 })
     return tmpdata
   }
 
