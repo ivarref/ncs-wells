@@ -25,7 +25,7 @@ function singleElement(root, elementtype, id) {
 function prop(p) { return function(d) { return d[p] } }
 function ww(elm) { return elm.node().getBBox().width }
 
-var margin = {top: 35, right: 60, bottom: 35, left: 60},
+var margin = {top: 72, right: 60, bottom: 35, left: 60},
     width = 960 - margin.left - margin.right,
     height = 470 - margin.top - margin.bottom
 
@@ -51,7 +51,10 @@ function update(svg, data, resource, color) {
   var y2 = d3.scale.linear().range([height, 0])
   y2.domain([0, 100])
 
-  svg.selectAll('line').data(d3.range(10, 110, 10))
+  var x2 = d3.scale.linear().range([0, width])
+           .domain([0, 100])
+
+  svg.append('g').selectAll('line').data(d3.range(10, 110, 10))
   .enter()
   .append('line')
   .attr('class', 'axis')
@@ -62,20 +65,34 @@ function update(svg, data, resource, color) {
   .style('stroke', 'gray')
   .style('stroke-opacity', '60%')
 
+  svg.append('g').selectAll('line').data(d3.range(10, 110, 10))
+  .enter()
+  .append('line')
+  .attr('class', 'axis')
+  .attr('x1', x2)
+  .attr('x2', x2)
+  .attr('y1', 0)
+  .attr('y2', height)
+  .style('stroke', 'gray')
+  .style('stroke-opacity', '60%')
+
   var spacewidth = 0.278
-  var heading1 = singleElement(svg, 'text', 'heading1')
+  var head_ctx = singleElement(svg, 'g', '#head_ctx')
+  head_ctx.attr('transform', 'translate(0, -35)')
+
+  var heading1 = singleElement(head_ctx, 'text', 'heading1')
   .attr("transform", "translate(" + (0) + "," + (0) + ")")
   .attr("dy", "-.29em").attr("class", "heading")
   .text('Which wellbores contained' + (resource==='All Petroleum'? '' : " the"))
 
-  var heading2 = singleElement(svg, 'text', 'heading2')
+  var heading2 = singleElement(head_ctx, 'text', 'heading2')
   .attr("transform", "translate(" + ww(heading1) + "," + (0) + ")")
   .attr("dy", "-.29em").attr("class", "heading")
   .attr("dx", (spacewidth*1) + "em")
   .style('fill', color)
   .text(resource)
 
-  var heading3 = singleElement(svg, 'text', 'heading3')
+  var heading3 = singleElement(head_ctx, 'text', 'heading3')
   .attr("transform", "translate(" + (ww(heading1) + ww(heading2)) + "," + (0) + ")")
   .attr("dy", "-.29em").attr("class", "heading")
   .attr("dx", (spacewidth*2) + "em")
@@ -86,6 +103,11 @@ function update(svg, data, resource, color) {
   .attr("transform", "translate(0," + height + ")")
   .call(d3.svg.axis().scale(x).orient("bottom") 
   .tickFormat(function(d) { return d }))
+
+  singleElement(svg, 'g', '#xAxis2')
+  .attr('class', 'x axis')
+  .attr("transform", "translate(0," + 0 + ")")
+  .call(d3.svg.axis().scale(x2).orient("top"))
 
   singleElement(svg, 'g', 'yAxis')
   .attr('class', 'y axis')
@@ -102,6 +124,13 @@ function update(svg, data, resource, color) {
   .style("text-anchor", "middle")
   .style("font-variant", "small-caps")
   .text('Number of Wells Drilled (in Chronological Order)')
+
+  singleElement(svg, 'text', '#xaxislabel2')
+  .attr("transform", "translate(" + (width/2) + "," + (0) + ")")
+  .attr("dy", "-1.69em")
+  .style("text-anchor", "middle")
+  .style("font-variant", "small-caps")
+  .text('Percentage of All Drillings')
 
   singleElement(svg, 'text', 'yaxislabel')
   .attr("transform", "translate(" + (width+35) + "," + (height/2) + ") rotate(90)")
@@ -167,10 +196,71 @@ function update(svg, data, resource, color) {
   .style('font-variant', 'small-caps')
   .text(function(d) { return d.key + "s" })
 
+  var yinfoctx = svg.append('g')
+  yinfoctx.append('line')
+  .attr('x1', 0)
+  .attr('x2', width)
+  .attr('y1', 0)
+  .attr('y2', 0)
+  .style('stroke', 'red')
+  .style('stroke-width', '2px')
+
+  var ylefttext = yinfoctx.append('text')
+  .attr('x', 0)
+  .attr('dx', '.29em')
+  .attr('dy', '-.29em')
+  .text('')
+
+  var yrighttext = yinfoctx.append('text')
+  .attr('x', width)
+  .attr('dx', '-.29em')
+  .attr('dy', '-.29em')
+  .style('text-anchor', 'end')
+  .text('')
+
+  var xinfoctx = svg.append('g')
+  xinfoctx.append('line')
+  .attr('x1', 0)
+  .attr('x2', 0)
+  .attr('y1', 0)
+  .attr('y2', height)
+  .style('stroke', 'red')
+  .style('stroke-width', '2px')
+
+  var xtoptext = xinfoctx.append('text')
+  .attr('y', 0)
+  .attr('dx', '.29em')
+  .attr('dy', '1.29em')
+  .text('hello')
+
+  var yeartext = xinfoctx.append('text')
+  .attr('y', height)
+  .attr('dx', '.29em')
+  .attr('dy', '-1.29em')
+  .text('year')
+
+  var yinfotxtRight = yinfoctx.append('text')
+
   svg.append('path').datum(data)
   .attr('d', d3.svg.line()
             .x(function(d) { return x(d.wellnumber) })
             .y(function(d) { return y(d.cumulative) }))
+
+  var bisect = d3.bisector(function(datum) { return datum.wellnumber; }).right;
+  
+  svg.on('mousemove', function() {
+    var mouse = d3.mouse(this);
+    var wellnumber = x.invert(mouse[0])
+    var index = bisect(data, wellnumber)
+    var d = data[index]
+    xinfoctx.attr('transform', 'translate(' + mouse[0] + ',0)')
+    yinfoctx.attr('transform', 'translate(0,' + y(d.cumulative) + ')')
+    yrighttext.text(d.cumulative.toFixed(1))
+    var percentage = (d.cumulative / data[data.length-1].cumulative * 100).toFixed(1)
+    ylefttext.text(percentage)
+    yeartext.text(d.date.getFullYear() + ", " + d.wellnumber + " wells drilled")
+    xtoptext.text( ((100.0*index) / (data.length-1)).toFixed(1))
+  })
 
   var giants = data.filter(function(d)  {return d.resource >= 1.0 })
 
@@ -195,6 +285,14 @@ function update(svg, data, resource, color) {
   .attr('dx', '.71em')
   .attr('dy', '1em')
 
+  var show_wellbore_info = function(d) {
+    infobox.attr('display', null)
+    infobox.attr('transform', 'translate(' + (x(d.wellnumber)+10) + "," + (y(d.cumulative)+10) + ')')
+    infotext.text(d.wellbore)
+    infotext2.text(d.resource.toFixed(1) + " Gboe, " + d.date.getFullYear())
+    rect.attr('width', 20 + d3.max([ww(infotext), ww(infotext2)]))
+  }
+
   svg.selectAll('circle').data(giants)
   .enter()
   .append('circle')
@@ -204,22 +302,20 @@ function update(svg, data, resource, color) {
   .style('fill', color)
   .style('stroke-width', '2px')
   .style('stroke', 'black')
-  .on('mouseover', function(d) {
-    infobox.attr('display', null)
-    infobox.attr('transform', 'translate(' + (x(d.wellnumber)+10) + "," + (y(d.cumulative)+10) + ')')
-    infotext.text(d.wellbore)
-    infotext2.text(d.resource.toFixed(1) + " Gboe")
-    rect.attr('width', 20 + d3.max([ww(infotext), ww(infotext2)]))
-  })
+  .on('click', show_wellbore_info)
+  .on('mouseover', show_wellbore_info)
+
+  svg.on('click', function() { infobox.attr('display', 'none') })
 
   /* 
   Goals
   =====
-  Show lines with dots
-  Add clik/hover info about selected wellbore, including year
+  Add alternative x axis percentage of cumulative drillings
 
   Done
   ====
+  Add clik/hover info about selected wellbore, including year
+  Show lines with dots
   Show dots
   Add gas, petroleum to display
   Add year as alternative x-axis?
