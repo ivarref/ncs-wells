@@ -32,7 +32,7 @@ function singleElement(root, elementtype, id) {
 function prop(p) { return function(d) { return d[p] } }
 function ww(elm) { return elm.node().getBBox().width }
 
-var margin = {top: 72, right: 60, bottom: 35, left: 60},
+var margin = {top: 72, right: 70, bottom: 35, left: 60},
     width = 960 - margin.left - margin.right,
     height = 470 - margin.top - margin.bottom
 
@@ -140,7 +140,7 @@ function update(svg, data, resource, color) {
   .text('Percentage of All Drillings')
 
   singleElement(svg, 'text', 'yaxislabel')
-  .attr("transform", "translate(" + (width+35) + "," + (height/2) + ") rotate(90)")
+  .attr("transform", "translate(" + (width+45) + "," + (height/2) + ") rotate(90)")
   .attr("dy", "-.29em")
   .attr('text-anchor', 'middle')
   .style('font-variant', 'small-caps')
