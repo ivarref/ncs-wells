@@ -360,6 +360,7 @@ d3.tsv('data/data.tsv', function(err, data) {
     })
 
     tmpdata.forEach(function(d) { d.resource = 0 })
+    tmpdata.forEach(function(d) { d.cumulative = d.cumulative * 6.29 })
     return tmpdata
   }
 
