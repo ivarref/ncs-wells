@@ -194,7 +194,7 @@ function update(svg, data, resource, color) {
 
   svg.append('g')
   .selectAll('text')
-  .data(dec2.filter(function(d, i) { return i > 0 }))
+  .data(dec2.filter(function(d, i) { return i >= 0 }))
   .enter()
   .append('text')
   .attr('transform', function(d) { return 'translate(' + x(d.start.wellnumber + d.delta/2) + "," + height + ")"; })
@@ -203,7 +203,7 @@ function update(svg, data, resource, color) {
   .style('font-variant', 'small-caps')
   .text(function(d) { return d.key + "s" })
 
-  var yinfoctx = svg.append('g')
+  var yinfoctx = svg.append('g').attr('display', 'none')
   yinfoctx.append('line')
   .attr('x1', 0)
   .attr('x2', width)
@@ -225,7 +225,7 @@ function update(svg, data, resource, color) {
   .style('text-anchor', 'end')
   .text('')
 
-  var xinfoctx = svg.append('g')
+  var xinfoctx = svg.append('g').attr('display', 'none')
   xinfoctx.append('line')
   .attr('x1', 0)
   .attr('x2', 0)
@@ -258,18 +258,28 @@ function update(svg, data, resource, color) {
   svg.on('mousemove', function() {
     var mouse = d3.mouse(this);
     var wellnumber = x.invert(mouse[0])
+    if (mouse[0] >= width || mouse[0]<0)
+      return
     var index = bisect(data, wellnumber)
     var d = data[index]
+    xinfoctx.attr('display', null)
+    yinfoctx.attr('display', null)
     xinfoctx.attr('transform', 'translate(' + mouse[0] + ',0)')
     yinfoctx.attr('transform', 'translate(0,' + y(d.cumulative) + ')')
     yrighttext.text(d.cumulative.toFixed(1))
-    var percentage = (d.cumulative / data[data.length-1].cumulative * 100).toFixed(1)
+    var percentage = (d.cumulative*100.0 / d3.max(data, prop('cumulative'))).toFixed(1)
     ylefttext.text(percentage)
     yeartext.text(d.date.getFullYear() + ", " + d.wellnumber + " wells drilled")
     xtoptext.text( ((100.0*index) / (data.length-1)).toFixed(1))
   })
+  svg.on('mouseout', function() {
+    xinfoctx.attr('display', 'none')
+    yinfoctx.attr('display', 'none')
+  })
 
   var giants = data.filter(function(d)  {return d.resource >= 1.0 })
+
+  var circlectx = svg.append('g')
 
   var infobox = svg.append('g')
   .attr('display', 'none')
@@ -300,7 +310,7 @@ function update(svg, data, resource, color) {
     rect.attr('width', 20 + d3.max([ww(infotext), ww(infotext2)]))
   }
 
-  svg.selectAll('circle').data(giants)
+  circlectx.selectAll('circle').data(giants)
   .enter()
   .append('circle')
   .attr('cx', function(d) { return x(d.wellnumber) })
@@ -359,7 +369,7 @@ d3.tsv('data/data.tsv', function(err, data) {
                'date' : format.parse(d.date) }
     })
 
-    tmpdata.forEach(function(d) { d.resource = 0 })
+    tmpdata.forEach(function(d) { d.resource = d.resource * 6.29 / 1000.0  })
     tmpdata.forEach(function(d) { d.cumulative = d.cumulative * 6.29 })
     return tmpdata
   }
