@@ -97,25 +97,7 @@ function update(svg, data, resource, color) {
   .attr("transform", "translate(" + (0) + "," + (0) + ")")
   .attr("dy", "-.29em").attr("class", "heading")
   .text('Rolling average Estimated Ultimately Recoverable of non-empty ')
-  .text('Olje- og Gassfunn på Norsk Sokkel')
-
-  /*
-  var heading2 = singleElement(head_ctx, 'text', 'heading2')
-  .attr("transform", "translate(" + ww(heading1) + "," + (0) + ")")
-  .attr("dy", "-.29em").attr("class", "heading")
-  .attr("dx", (spacewidth*1) + "em")
-  .style('fill', color)
-  .text(resource)
-  */
-
-  /*
-  var heading3 = singleElement(head_ctx, 'text', 'heading3')
-  .attr("transform", "translate(" + (ww(heading1) + ww(heading2)) + "," + (0) + ")")
-  .attr("dy", "-.29em").attr("class", "heading")
-  .attr("dx", (spacewidth*1) + "em")
-  .text('drillings')
-  .text('brønner')
-  */
+  .text('Olje- og Gassfunn på Norsk Sokkel — 1972 - 2014')
 
   singleElement(svg, 'g', 'xAxis')
   .attr('class', 'x axis')
@@ -381,6 +363,8 @@ d3.tsv('data/data.tsv', function(err, data) {
 
     tmpdata.forEach(function(d) { d.resource = d.resource * 6.29 / 1000.0  })
     tmpdata.forEach(function(d) { d.cumulative = d.cumulative * 6.29 })
+    //console.log(tmpdata[0].date)
+    //console.log(tmpdata[tmpdata.length-1].date)
     return tmpdata
   }
 
