@@ -98,13 +98,16 @@ function update(svg, data, resource, color) {
   .attr("dy", "-.29em").attr("class", "heading")
   .text('Rolling average Estimated Ultimately Recoverable of non-empty ')
   .text('Glidende Gjennomsnittlig Funnstørrelse for ikke-tomme ')
+  .text('Norske Olje- og Gassfunn')
 
+  /*
   var heading2 = singleElement(head_ctx, 'text', 'heading2')
   .attr("transform", "translate(" + ww(heading1) + "," + (0) + ")")
   .attr("dy", "-.29em").attr("class", "heading")
   .attr("dx", (spacewidth*1) + "em")
   .style('fill', color)
   .text(resource)
+  */
 
   /*
   var heading3 = singleElement(head_ctx, 'text', 'heading3')
@@ -154,21 +157,24 @@ function update(svg, data, resource, color) {
   .attr("dy", "-1.39em")
   .attr('text-anchor', 'middle')
   .style('font-variant', 'small-caps')
+  .style('font-size', '14px')
+  //.style('font-weight', 'bold')
   //.text('Rolling average EUR of ' + n + ' drillings, Mboe')
-  .text('Glidende Gjennomsnittl Utvinnbare Reserver siste ' + n + ' brønner,')
+  .text('Funnstørrelse, Millioner Fat Oljeekvivalenter') //Glidende Gjennomsnittl Utvinnbare Reserver siste ' + n + ' brønner,')
 
   singleElement(svg, 'text', 'yaxislabel3')
   .attr("transform", "translate(" + (width+45) + "," + (height/2) + ") rotate(90)")
   .attr("dy", "-.29em")
   .attr('text-anchor', 'middle')
   .style('font-variant', 'small-caps')
-  .text('Millioner Fat Oljeekvivalenter')
+  .text('Glidende gjennomsnitt for siste ' + n + ' brønner')
 
   singleElement(svg, 'text', 'yaxislabel2')
   .attr("transform", "translate(" + (-35) + "," + (height/2) + ") rotate(-90)")
   .attr("dy", ".39em")
   .attr('text-anchor', 'middle')
   .style('font-variant', 'small-caps')
+  .style('font-size', '14px')
   .text('Prosent av Toppnivå')
 
   singleElement(svg, 'text', 'sourceinfo')
@@ -219,6 +225,8 @@ function update(svg, data, resource, color) {
   .attr('dy', '1.21em')
   .style('text-anchor', 'middle')
   .style('font-variant', 'small-caps')
+  .style('font-weight', 'bold')
+  .style('font-size', '14px')
   .text(function(d) { 
     if (d.key[0]=='1') {
       return d.key.split('19')[1] + '-tallet'
