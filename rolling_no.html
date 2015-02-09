@@ -4,7 +4,7 @@
 body { font: 12px sans-serif; }
 svg { border: 1px solid #000; }
 path { fill: none; stroke: black; stroke-width: 3px; }
-text.heading { font: 22px sans-serif; font-variant: small-caps; font-weight: bold; }
+text.heading { font: 25px sans-serif; font-variant: small-caps; font-weight: bold; }
 .axis path,
 .axis line { fill: none; stroke: #000; stroke-width: 1px; shape-rendering: crispEdges; }
 </style>
@@ -95,7 +95,7 @@ function update(svg, data, resource, color) {
 
   var heading1 = singleElement(head_ctx, 'text', 'heading1')
   .attr("transform", "translate(" + (0) + "," + (0) + ")")
-  .attr("dy", "-.29em").attr("class", "heading")
+  .attr("dy", "-.21em").attr("class", "heading")
   .text('Rolling average Estimated Ultimately Recoverable of non-empty ')
   .text('Olje- og Gassfunn på Norsk Sokkel — 1972 - 2014')
 
