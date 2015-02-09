@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body { font: 12px sans-serif; }
+svg { border: 1px solid #000; }
+path { fill: none; stroke: black; stroke-width: 3px; }
+text.heading { font: 22px sans-serif; font-variant: small-caps; font-weight: bold; }
+.axis path,
+.axis line { fill: none; stroke: #000; stroke-width: 1px; shape-rendering: crispEdges; }
+</style>
+<title>Average rolling size of non empty wildcat drillings</title>
+<body>
+<script src="d3.v3.min.js"></script>
+<script>
+  if (window.location.href.indexOf("localhost") == -1) {
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-56575481-4', 'auto');
+    ga('send', 'pageview');
+  }
+function getURLParameter(name, default_value) {
+  var component = decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))
+  return (component||default_value).split('/')[0]
+}
+
+var n = parseInt(getURLParameter('n', '10'))
+
+function singleElement(root, elementtype, id) {
+  if (id.charAt(0) == '#') id = id.substring(1)
+  var sel = root.selectAll(elementtype + "#" + id).data([1])
+  sel.enter().append(elementtype).attr('id', id)
+  return sel
+}
+
+function prop(p) { return function(d) { return d[p] } }
+function ww(elm) { return elm.node().getBBox().width }
+
+var margin = {top: 72, right: 90, bottom: 35, left: 60},
+    width = 960 - margin.left - margin.right,
+    height = 470 - margin.top - margin.bottom
+
+function get_svg(margin_top) {
+    return d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .style("margin-top", margin_top)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+}
+var svg1 = get_svg('0em'); d3.select('body').append('div')
+//var svg2 = get_svg('1em'); d3.select('body').append('div')
+//var svg3 = get_svg('1em'); d3.select('body').append('div')
+
+function update(svg, data, resource, color) {
+  var x = d3.scale.linear().range([0, width])
+  var y = d3.scale.linear().range([height, 0])
+
+  x.domain([0, d3.max(data, prop('wellnumber'))])
+  y.domain([0, d3.max(data, prop('cumulative'))])
+
+  var y2 = d3.scale.linear().range([height, 0])
+  y2.domain([0, 100])
+
+  var x2 = d3.scale.linear().range([0, width])
+           .domain([0, 100])
+
+  svg.append('g').selectAll('line').data(d3.range(10, 110, 10))
+  .enter()
+  .append('line')
+  .attr('class', 'axis')
+  .attr('x1', 0)
+  .attr('x2', width)
+  .attr('y1', y2)
+  .attr('y2', y2)
+  .style('stroke', 'gray')
+  .style('stroke-opacity', '60%')
+
+  svg.append('g').selectAll('line').data(d3.range(10, 110, 10))
+  .enter()
+  .append('line')
+  .attr('class', 'axis')
+  .attr('x1', x2)
+  .attr('x2', x2)
+  .attr('y1', 0)
+  .attr('y2', height)
+  .style('stroke', 'gray')
+  .style('stroke-opacity', '60%')
+
+  var spacewidth = 0.278
+  var head_ctx = singleElement(svg, 'g', '#head_ctx')
+  head_ctx.attr('transform', 'translate(0, -35)')
+
+  var heading1 = singleElement(head_ctx, 'text', 'heading1')
+  .attr("transform", "translate(" + (0) + "," + (0) + ")")
+  .attr("dy", "-.29em").attr("class", "heading")
+  .text('Rolling average Estimated Ultimately Recoverable of non-empty ')
+  .text('Glidende Gjennomsnittlig Funnstørrelse for ikke-tomme ')
+
+  var heading2 = singleElement(head_ctx, 'text', 'heading2')
+  .attr("transform", "translate(" + ww(heading1) + "," + (0) + ")")
+  .attr("dy", "-.29em").attr("class", "heading")
+  .attr("dx", (spacewidth*1) + "em")
+  .style('fill', color)
+  .text(resource)
+
+  /*
+  var heading3 = singleElement(head_ctx, 'text', 'heading3')
+  .attr("transform", "translate(" + (ww(heading1) + ww(heading2)) + "," + (0) + ")")
+  .attr("dy", "-.29em").attr("class", "heading")
+  .attr("dx", (spacewidth*1) + "em")
+  .text('drillings')
+  .text('brønner')
+  */
+
+  singleElement(svg, 'g', 'xAxis')
+  .attr('class', 'x axis')
+  .attr("transform", "translate(0," + height + ")")
+  .call(d3.svg.axis().scale(x).orient("bottom") 
+  .tickFormat(function(d) { return d }))
+
+  singleElement(svg, 'g', '#xAxis2')
+  .attr('class', 'x axis')
+  .attr("transform", "translate(0," + 0 + ")")
+  .call(d3.svg.axis().scale(x2).orient("top"))
+
+  singleElement(svg, 'g', 'yAxis')
+  .attr('class', 'y axis')
+  .attr("transform", "translate(" + width + ",0)")
+  .call(d3.svg.axis().scale(y).orient("right"))
+
+  singleElement(svg, 'g', 'yAxis2')
+  .attr('class', 'y axis')
+  .call(d3.svg.axis().scale(y2).orient("left"))
+
+  singleElement(svg, 'text', 'xaxislabel')
+  .attr("transform", "translate(" + (width/2) + "," + (height + margin.bottom) + ")")
+  .attr("dy", "-.29em")
+  .style("text-anchor", "middle")
+  .style("font-variant", "small-caps")
+  .text('Antall ikke-tomme Utforskningsbrønner (i kronologisk rekkefølge)')
+
+  singleElement(svg, 'text', '#xaxislabel2')
+  .attr("transform", "translate(" + (width/2) + "," + (0) + ")")
+  .attr("dy", "-1.69em")
+  .style("text-anchor", "middle")
+  .style("font-variant", "small-caps")
+  .text('Prosent av alle boringer')
+
+  singleElement(svg, 'text', 'yaxislabel')
+  .attr("transform", "translate(" + (width+45) + "," + (height/2) + ") rotate(90)")
+  .attr("dy", "-1.39em")
+  .attr('text-anchor', 'middle')
+  .style('font-variant', 'small-caps')
+  //.text('Rolling average EUR of ' + n + ' drillings, Mboe')
+  .text('Glidende Gjennomsnittl Utvinnbare Reserver siste ' + n + ' brønner,')
+
+  singleElement(svg, 'text', 'yaxislabel3')
+  .attr("transform", "translate(" + (width+45) + "," + (height/2) + ") rotate(90)")
+  .attr("dy", "-.29em")
+  .attr('text-anchor', 'middle')
+  .style('font-variant', 'small-caps')
+  .text('Millioner Fat Oljeekvivalenter')
+
+  singleElement(svg, 'text', 'yaxislabel2')
+  .attr("transform", "translate(" + (-35) + "," + (height/2) + ") rotate(-90)")
+  .attr("dy", ".39em")
+  .attr('text-anchor', 'middle')
+  .style('font-variant', 'small-caps')
+  .text('Prosent av Toppnivå')
+
+  singleElement(svg, 'text', 'sourceinfo')
+  .attr("transform", "translate(" + (0) + "," + (height + margin.bottom) + ")")
+  .attr("dy", "-.29em")
+  .attr("dx", "-.29em")
+  .style("text-anchor", "start")
+  .text('Basert på data fra OD')
+
+  singleElement(svg, 'text', 'contact')
+  .attr("transform", "translate(" + (width + margin.right) + "," + (height + margin.bottom) + ")")
+  .attr("dy", "-.29em")
+  .attr("dx", "-.29em")
+  .style("text-anchor", "end")
+  .style('font-variant', 'small-caps')
+  .text('Diagram av Refsdal.Ivar@gmail.com')
+
+  var decades = d3.nest()
+  .key(function(d) { var yr = d.date.getFullYear(); return yr - (yr%10); })
+  .sortKeys(d3.ascending)
+  .entries(data)
+
+  var dec2 = decades.map(function(d, i) {
+    var nextelem = (i != (decades.length-1)) ? decades[i+1].values[0] : d.values[d.values.length-1]
+    var startelem = d.values[0]
+    var found_in_decade = d3.sum(d.values, function(d) { return d.resource }) * 6.29 / 1000.0
+    return {key : d.key, resources : found_in_decade, count: d.values.length, delta : nextelem.wellnumber - startelem.wellnumber, start : startelem, stop: nextelem}
+  })
+
+  svg.append('g')
+  .selectAll('rect')
+  .data(dec2)
+  .enter()
+  .append('rect')
+  .attr('transform', function(d) { return 'translate(' + x(d.start.wellnumber) + ",0)"; })
+  .attr('width', function(d) { return x(d.delta) })
+  .attr('height', function(d) { return height - y(d.resources) })
+  .attr('height', height)
+  .style('fill', function(d,i) { return i%2==0 ? 'gray' : 'lightgray' })
+  .style('fill-opacity', '50%')
+
+  svg.append('g')
+  .selectAll('text')
+  .data(dec2.filter(function(d, i) { return i >= 0 }))
+  .enter()
+  .append('text')
+  .attr('transform', function(d) { return 'translate(' + x(d.start.wellnumber + d.delta/2) + "," + 0 + ")"; })
+  .attr('dy', '1.21em')
+  .style('text-anchor', 'middle')
+  .style('font-variant', 'small-caps')
+  .text(function(d) { 
+    if (d.key[0]=='1') {
+      return d.key.split('19')[1] + '-tallet'
+    }
+    return d.key + "-tallet" 
+  })
+
+  var yinfoctx = svg.append('g').attr('display', 'none')
+  yinfoctx.append('line')
+  .attr('x1', 0)
+  .attr('x2', width)
+  .attr('y1', 0)
+  .attr('y2', 0)
+  .style('stroke', 'red')
+  .style('stroke-width', '2px')
+
+  var ylefttext = yinfoctx.append('text')
+  .attr('x', 0)
+  .attr('dx', '.29em')
+  .attr('dy', '-.29em')
+  .text('')
+
+  var yrighttext = yinfoctx.append('text')
+  .attr('x', width)
+  .attr('dx', '-.29em')
+  .attr('dy', '-.29em')
+  .style('text-anchor', 'end')
+  .text('')
+
+  var xinfoctx = svg.append('g').attr('display', 'none')
+  xinfoctx.append('line')
+  .attr('x1', 0)
+  .attr('x2', 0)
+  .attr('y1', 0)
+  .attr('y2', height)
+  .style('stroke', 'red')
+  .style('stroke-width', '2px')
+
+  var xtoptext = xinfoctx.append('text')
+  .attr('y', 0)
+  .attr('dx', '.29em')
+  .attr('dy', '1.29em')
+  .text('')
+
+  var yeartext = xinfoctx.append('text')
+  .attr('y', height)
+  .attr('dx', '.29em')
+  .attr('dy', '-1.29em')
+  .text('')
+
+  var yinfotxtRight = yinfoctx.append('text')
+
+  svg.append('path').datum(data)
+  .attr('d', d3.svg.line()
+            .x(function(d) { return x(d.wellnumber) })
+            .y(function(d) { return y(d.cumulative) }))
+
+  var bisect = d3.bisector(function(datum) { return datum.wellnumber; }).right;
+  
+  var giants = data.filter(function(d)  {return d.resource >= 1.0 })
+
+  var circlectx = svg.append('g')
+
+  var infobox = svg.append('g')
+  .attr('display', 'none')
+
+  var rect = infobox.append('rect')
+  .attr('height', '34')
+  .attr('width', '100')
+  .attr('dx', '-1em')
+  .attr('y', '-16')
+  .style('fill', '#eee')
+  .style('fill-opacity', '80%')
+  .style('stroke', 'black')
+  .style('stroke-width', '1px')
+
+  var infotext = infobox.append('text')
+  .attr('dx', '.71em')
+  .style('font-weight', 'bold')
+
+  var infotext2 = infobox.append('text')
+  .attr('dx', '.71em')
+  .attr('dy', '1em')
+
+  var show_wellbore_info = function(d) {
+    infobox.attr('display', null)
+    infobox.attr('transform', 'translate(' + (x(d.wellnumber)+10) + "," + (y(d.cumulative)+10) + ')')
+    infotext.text(d.wellbore)
+    infotext2.text(d.resource.toFixed(1) + " Gboe, " + d.date.getFullYear())
+    rect.attr('width', 20 + d3.max([ww(infotext), ww(infotext2)]))
+  }
+
+  /*
+  circlectx.selectAll('circle').data(giants)
+  .enter()
+  .append('circle')
+  .attr('cx', function(d) { return x(d.wellnumber) })
+  .attr('cy', function(d) { return y(d.cumulative) })
+  .attr('r', 5)
+  .style('fill', color)
+  .style('stroke-width', '2px')
+  .style('stroke', 'black')
+  .on('click', show_wellbore_info)
+  .on('mouseover', show_wellbore_info)
+  */
+
+  svg.on('click', function() { infobox.attr('display', 'none') })
+
+  /* 
+  Goals
+  =====
+  Add moving average of 50 wells
+
+  Done
+  ====
+  Add alternative x axis percentage of cumulative drillings
+  Add clik/hover info about selected wellbore, including year
+  Show lines with dots
+  Show dots
+  Add gas, petroleum to display
+  Add year as alternative x-axis?
+
+  No
+  ==
+  Use range bands?
+  */
+}
+
+var format = d3.time.format("%Y-%m-%d");
+
+d3.tsv('data/data.tsv', function(err, data) { 
+  function build_data(resource) {
+    var wellnumber = 0
+    var cumulative_discovered = 0
+
+    var moving_average = []
+    var dat = data.slice(0).filter(function(d) { return +d[resource] > 0 })
+
+    while (moving_average.length!=(n-1))
+      moving_average.push(dat.shift())
+    
+    var tmpdata = dat.slice(0).map(function(d) {
+      moving_average.push(dat.shift())
+      var group = moving_average.slice(0)
+      moving_average.shift()
+      var cumulative = (d3.sum(group, function(d) { return +d[resource] })) / (0.0 + n)
+      return { 'wellbore' : d.wellbore,
+               'wellnumber' : ++wellnumber,
+               'resource' : +d[resource],
+               'cumulative' : cumulative,
+               'date' : format.parse(d.date) }
+    })
+
+    tmpdata.forEach(function(d) { d.resource = d.resource * 6.29 / 1000.0  })
+    tmpdata.forEach(function(d) { d.cumulative = d.cumulative * 6.29 })
+    return tmpdata
+  }
+
+  update(svg1, build_data('discovered_oe'), 'Petroleumsboringer', 'saddlebrown')
+
+  /*
+  d3.select('body').append('div')
+  .append('a')
+  .attr('href', 'https://github.com/ivarref/ncs-wells/')
+  .text('More info about this diagram.')
+  d3.select('body').append('div')
+  */
+
+})
+
+</script>
+</body>
