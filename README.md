@@ -15,8 +15,13 @@ Only wellbores with purpose 'WILDCAT' is processed further.
 These wells are mapped to reserves on the "Field NPD page: Table view -> Reserves"
 and "Discovery NPD page: Table view -> Resources".
 
-Data last updated 2015-01-28.
+Update
+------
 
+    git clone git@github.com:ivarref/ncs-wells.git && \
+    cd ncs-wells && ./pull_data.py && \
+    git commit -am "$(date): update data" && git push && \
+    git checkout gh-pages && git merge master && git push
 
 Comments
 --------
