@@ -28,8 +28,8 @@ if __name__=="__main__":
         else:
             del frame[col]
     frame = frame[pd.notnull(frame.wlbDiscovery)]
-    frame.sort_values('wlbDiscovery')
-    
+    frame.sort_values('wlbEntryDate')
+    frame.to_csv('temp_discoveries.csv')
     print(frame)
 
     #print("hello world!")
