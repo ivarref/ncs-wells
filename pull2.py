@@ -22,6 +22,17 @@ if __name__=="__main__":
     frame = frame[pd.notnull(frame.wlbEntryDate)]
     frame = frame[frame.wlbPurpose == 'WILDCAT']
     keep_columns = ['wlbField', 'wlbDiscovery', 'wlbEntryDate', 'wlbWellboreName', 'dscNpdidDiscovery']
+    pd.DataFrame({'columns': pd.Series(frame.columns.values)}).to_csv('raw_wells_columns.csv', index=False)
+    
+    perfect = frame
+    for col in frame.columns:
+        p = perfect[pd.notnull(frame[col])]
+        if len(p) == 0:
+            continue
+        else:
+            perfect = p
+    perfect.to_csv('raw_wells_perfect.csv', index=False)
+
     for col in frame.columns:
         if col in keep_columns:
             continue
