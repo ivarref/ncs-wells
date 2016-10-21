@@ -21,7 +21,7 @@ if __name__=="__main__":
     frame = pd.read_csv('raw_wells.csv')
     frame = frame[pd.notnull(frame.wlbEntryDate)]
     frame = frame[frame.wlbPurpose == 'WILDCAT']
-    keep_columns = ['wlbField', 'wlbDiscovery', 'wlbEntryDate']
+    keep_columns = ['wlbField', 'wlbDiscovery', 'wlbEntryDate', 'wlbWellboreName']
     for col in frame.columns:
         if col in keep_columns:
             continue
